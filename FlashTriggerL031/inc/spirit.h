@@ -13,6 +13,8 @@
 #include <stdbool.h>
 #include "SPIRIT_Types.h"
 
+#define USE_SPIRIT1_915MHz
+
 typedef void(*Ptr_OnGPIO3_EXTI)(void);
 
 void Spirit_Init(Ptr_OnGPIO3_EXTI pOnGPIO3Exti);

@@ -254,19 +254,21 @@ void App_Init(void)
 
   SetOffInterval(STD_OFF_INTERVAL_MS);
 
+  // zjistime, jestli jsme MASTER nebo SLAVE
   g_Master = Gpio_IsMaster();
 
+  // povesime funkci na preruseni podle toho jestli budeme vysilat (MASTER) nebo prijimat (SLAVE)
   if (g_Master)
   {
     Spirit_Init(OnSpiritInterruptHandlerMaster);
   }
   else
   {
-//    Spirit_Init(OnSpiritInterruptHandlerSlaveSniffer);
+    // Spirit_Init(OnSpiritInterruptHandlerSlaveSniffer);
     Spirit_Init(OnSpiritInterruptHandlerSlave);
   }
 
-  // cekat na uvolneni tlacitka a pro master zmereni delky drzeni stisknuti
+  // cekat na uvolneni tlacitka a pro MASTER zmerime delku stisknuti
   uint32_t nStartTime = GetTicks_ms();
   while (Gpio_IsButtonPressed_ms());
   uint32_t nPressDuration = GetTicks_ms() - nStartTime;
@@ -291,7 +293,7 @@ void App_Init(void)
     g_eState = APP_STATE_START_RX;
   }
 
-  /* Board management */
+  // SPIRIT management
   Spirit_EnterShutdown();
   Spirit_ExitShutdown();
 
@@ -309,14 +311,15 @@ void App_Init(void)
   // wait for READY state and set XTAL frequency
   SpiritManagementIdentificationRFBoard();
 
-  Spirit1GpioIrqInit(&xGpioIRQ); // Spirit IRQ config
+  // Spirit IRQ config
+  Spirit1GpioIrqInit(&xGpioIRQ);
 
   // Todo: !!! po nastaveni registru by se mela udelat VCO kalibrace!!!
   //https://my.st.com/public/STe2ecommunities/interface/Lists/Low%20Power%20RF%20Solutions/DispForm.aspx?ID=696&RootFolder=%2fpublic%2fSTe2ecommunities%2finterface%2fLists%2fLow%20Power%20RF%20Solutions%2fSPIRIT1%20yet%20another%20can%27t%20get%20to%20Rx%20problem&Source=https%3A%2F%2Fmy%2Est%2Ecom%2Fpublic%2FSTe2ecommunities%2Finterface%2FLists%2FLow%2520Power%2520RF%2520Solutions%2FAllItems%2Easpx%3FRootFolder%3D%252fpublic%252fSTe2ecommunities%252finterface%252fLists%252fLow%2520Power%2520RF%2520Solutions%252fSPIRIT1%2520yet%2520another%2520can%2527t%2520get%2520to%2520Rx%2520problem%26FolderCTID%3D0x0107009D947151ED1E46C998F5DFE02DFA735600F512522A73A5B4479728569A6F8E9913%26View%3D%257b9E4E3322%252dEA51%252d4610%252d85FF%252dF7E487351A95%257d
   Spirit_InitRegs();// Spirit Radio config
 
   Spirit_SetPowerRegs();  // Spirit Radio set power
-  //  Spirit_ProtocolInitRegs();  // Spirit Packet config
+  // Spirit_ProtocolInitRegs();  // Spirit Packet config
 
   App_SpiritBasicProtocolInit();
 
@@ -327,7 +330,7 @@ void App_Init(void)
   // start blik
   Gpio_LedBlink(200);
 
-    // pro master nakonfigurovat optodiodu
+  // pro MASTER nakonfigurovat optodiodu
   if (g_Master)
   {
     Gpio_OptoInit(App_ADCGetConv);
@@ -338,6 +341,7 @@ void App_Init(void)
 //    while(1);
   }
 
+  // pro MASTER konfigurace opto snimani
   if (g_Master)
   {
     g_nTimeCounter = 0;

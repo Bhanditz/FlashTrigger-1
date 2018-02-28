@@ -345,16 +345,17 @@ void Spirit1GetRxPacket(uint8_t *buffer, uint8_t *cRxData )
 */
 void Spirit1StartTx(uint8_t *buffer, uint8_t size )
 {
-  if(g_xStatus.MC_STATE==MC_STATE_RX)
+  if(g_xStatus.MC_STATE == MC_STATE_RX)
   {
     SpiritCmdStrobeSabort();
   }
-  /* fit the TX FIFO */
+
+  // fit the TX FIFO
   SpiritCmdStrobeFlushTxFifo();
   
   SpiritSpiWriteLinearFifo(size, buffer);
   
-  /* send the TX command */
+  // send the TX command
   SpiritCmdStrobeTx();
 }
 

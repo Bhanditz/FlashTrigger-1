@@ -9,7 +9,7 @@
 #include "spirit_spi.h"
 
 //#define USE_SPIRIT1_868MHz
-#define USE_SPIRIT1_915MHz
+
 
 #define SPIRIT1_SDN_PIN                 (1 << 2)  // out
 #define SPIRIT1_SDN_GPIO_PORT           GPIOA

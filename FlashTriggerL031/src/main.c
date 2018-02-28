@@ -15,14 +15,22 @@
 #include "Eeprom.h"
 
 
-/*
+/* --------------------------------------------------------------------------------
+ *
  *  Vzdalenost impulsu na fotoaparatu FinePix S6500 je cca 100ms.
  *  1. impuls (predblesk): sirka 500us
  *  2. impuls : sirka 700 us, pak klesa az do 1,5 ms, ve 2ms uz je uroven nula
  *
  *  blesk: plna uroven-sirka 2ms, pak klesa, ve 4ms je uroven nula
+ * --------------------------------------------------------------------------------
  *
+ * Spotreba:
+ *   vypnuto:   MASTER i SLAVE 1,6 uA
+ *   po zapnutí:
+ *     MASTER         SLAVE
+ *      4 mA            14,4 mA
  *
+ * --------------------------------------------------------------------------------
  *
  * Intervaly tlacitka pri zapnuti pro MASTER (SLAVE umi jenom zapnout):
  *   < 1000ms: zapnuti, pocet bliknuti indikuje naprogramovany pocet zablesku
@@ -30,6 +38,7 @@
  *   > 3000ms: programovani poctu zablesku fotoaparatu
  *
  *
+ * v0.1 - prvni verze (1.3.2018)
  */
 
 
@@ -37,10 +46,9 @@ int main(void)
 {
   // pri behu na MSI 2,1 MHz je spotreba 261 uA
 
-  // pri behu na HSI 16MHz je spotreba cca 1 mA
+  // pri behu na HSI 16MHz je spotreba cca MCU cca 1,5 mA
   SetHSI16();
 
-//  SysTick_Config(1000);
   SystemCoreClockUpdate();
 
 //  Eeprom_UnlockPELOCK();
