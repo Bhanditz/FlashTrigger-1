@@ -7,6 +7,10 @@
 
 #include "clock.h"
 
+//  // pri behu na MSI 2,1 MHz je spotreba 261 uA
+//
+//  // pri behu na HSI 16MHz je spotreba cca 1 mA
+
 void SetHSI16(void)
 {
 //  RCC->APB1ENR |= (RCC_APB1ENR_PWREN); /* (1) */

@@ -14,8 +14,8 @@
 #define SPIRIT1_CS_ENABLE         (SPIRIT1_CS_GPIO_PORT->BRR = SPIRIT1_CS_PIN)
 #define SPIRIT1_CS_DISABLE        (SPIRIT1_CS_GPIO_PORT->BSRR = SPIRIT1_CS_PIN)
 
-#define CS_TO_SCLK_DELAY     0x0100
-#define CLK_TO_CS_DELAY      0x0100
+#define CS_TO_SCLK_DELAY     (SystemCoreClock / 330000)  // wait podle SYSCLK
+#define CLK_TO_CS_DELAY      0x0030
 
 /* SPIRIT1_Spi_config_Headers */
 #define HEADER_WRITE_MASK     0x00                                /*!< Write mask for header byte*/
@@ -44,6 +44,7 @@
 // promenne pro ukladani dat do registru
 uint8_t g_regCount;
 int16_t g_RegVal[300];
+
 
 void SPIspirit_init()
 {
@@ -105,10 +106,7 @@ uint16_t SPIspirit_SendHeader(uint8_t nHeader, uint8_t nValue)
 
 //  SPI_ENTER_CRITICAL();
 
-  /* Puts the SPI chip select low to start the transaction */
-  SPIRIT1_CS_ENABLE;
-
-  for (volatile uint16_t i = 0; i < CS_TO_SCLK_DELAY; i++);
+  SPIspirit_Active();
 
   /* Write the aHeader bytes and read the SPIRIT1 status bytes */
   status = SPIspirit_write(nHeader);
@@ -118,6 +116,14 @@ uint16_t SPIspirit_SendHeader(uint8_t nHeader, uint8_t nValue)
   status |= SPIspirit_write(nValue);
 
   return status;
+}
+
+void SPIspirit_Active()
+{
+  /* Puts the SPI chip select low to start the transaction */
+  SPIRIT1_CS_ENABLE;
+
+  for (volatile uint16_t i = 0; i < CS_TO_SCLK_DELAY; i++);
 }
 
 void SPIspirit_Deactive()

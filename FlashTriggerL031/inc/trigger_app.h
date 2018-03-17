@@ -36,7 +36,7 @@
 #define POWER_DBM                   11.6
 #define POWER_INDEX                 7
 
-#define RECEIVE_TIMEOUT             2000.0 /*change the value for required timeout period*/
+#define RECEIVE_TIMEOUT             2100.0 // master vysila CHECK po 2000ms
 #define RSSI_THRESHOLD              -120
 
 /*  Packet configuration parameters  */
@@ -113,7 +113,7 @@ typedef struct
 }AppliFrame_t;
 
 void App_Exec(void);
-void App_Init(void);
+void App_Init();
 void App_SendBuffer(uint8_t* pBuffer, uint8_t nLength);
 void App_ReceiveBuffer(uint8_t *RxFrameBuff, uint8_t cRxlen);
 void App_SpiritBasicProtocolInit(void);

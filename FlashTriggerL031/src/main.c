@@ -28,7 +28,7 @@
  *   vypnuto:   MASTER i SLAVE 1,6 uA
  *   po zapnutí:
  *     MASTER         SLAVE
- *      4 mA            14,4 mA
+ *      4 mA            15 mA
  *
  * --------------------------------------------------------------------------------
  *
@@ -45,9 +45,9 @@
 int main(void)
 {
   // pri behu na MSI 2,1 MHz je spotreba 261 uA
-
   // pri behu na HSI 16MHz je spotreba cca MCU cca 1,5 mA
   SetHSI16();
+//  SetMSI(msi_4Mhz);
 
   SystemCoreClockUpdate();
 
@@ -62,7 +62,6 @@ int main(void)
 //  Programming();
 
 
-
 //  // po resetu jdeme do Standby
 //  RCC->APB1ENR |= RCC_APB1ENR_PWREN;
 //  if (!(PWR->CSR & PWR_CSR_SBF))
@@ -70,8 +69,7 @@ int main(void)
 //    Gpio_StandbyMode();
 //  }
 
-//  uint8_t res = SpiritRadioSetFrequencyBase(915000000);
-//  uint32_t freq = SpiritRadioGetFrequencyBase();
+
   while (1)
   {
     App_Exec();

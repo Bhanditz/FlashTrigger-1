@@ -15,6 +15,7 @@ typedef SpiritStatus StatusBytes;
 
 void SPIspirit_init();
 uint8_t SPIspirit_write(uint8_t value);
+void SPIspirit_Active();
 void SPIspirit_Deactive();
 
 uint16_t SPIspirit_SendHeader(uint8_t nHeader, uint8_t nValue);

@@ -27,8 +27,9 @@ void Spirit_DisableIRQ(void);
 
 void Spirit_WriteReg(uint8_t nRegAddr, uint8_t nValue);
 void Spirit_WriteCommand(uint8_t nCommand, SpiritState state);
+uint8_t Spirit_ReadReg(uint8_t nRegAddr);
 
-void Spirit_InitRegs();
+void Spirit_InitRegs(bool bMaster);
 void Spirit_SetPowerRegs(void);
 void Spirit_ProtocolInitRegs(void);
 void Spirit_EnableSQIRegs(void);

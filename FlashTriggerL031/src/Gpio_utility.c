@@ -133,7 +133,7 @@ void Gpio_OptoInit(Ptr_OnAdcConv pOnAdcConv)
   RCC->APB2ENR |= RCC_APB2ENR_TIM22EN;
   TIM22->CR2 |= TIM_CR2_MMS_1; // Configure MMS=010 to output a rising edge at each update event
   TIM22->PSC = 0;
-  TIM22->ARR = (uint16_t)800; // 16MHz/20kHz(50us) = 800
+  TIM22->ARR = (uint16_t) (SystemCoreClock / 20000); // register value = PCLK/20kHz(50us)
   TIM22->CR1 |= TIM_CR1_CEN; // Enable TIM22
 
   OPTO_OUTPUT_ON;
@@ -216,7 +216,7 @@ void Gpio_FlashBlink()
 // pomale zhasinani LED
 void Gpio_LedOffDiming()
 {
-  uint16_t led_range = 0x350;
+  uint16_t led_range = 900;
   uint16_t led_rate = led_range;
 
   while (led_rate)
