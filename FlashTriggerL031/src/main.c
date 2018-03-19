@@ -39,6 +39,7 @@
  *
  *
  * v0.1 - prvni verze (1.3.2018)
+ * v0.2 - opravena kalibrace (v DEBUG konfiguraci stiha expozicni cas 1/60s)
  */
 
 
@@ -51,11 +52,6 @@ int main(void)
 
   SystemCoreClockUpdate();
 
-//  Eeprom_UnlockPELOCK();
-//
-//  *(uint8_t *)(DATA_E2_ADDR+1) = 0x55; /* (1) */
-//  uint8_t v = (*(uint8_t *)(DATA_E2_ADDR+1));
-//  Eeprom_LockNVM();
 
   App_Init();
 

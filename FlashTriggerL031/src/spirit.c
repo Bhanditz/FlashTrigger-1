@@ -152,41 +152,24 @@ void Spirit_InitRegs(bool bMaster)
   Spirit_WriteReg(AFC2_BASE, 200);  // Automatic frequency compensation algorithm parameters (FSK/GFSK/MSK)
   Spirit_WriteReg(153, 128);      // 0x99
   Spirit_WriteReg(154, 227);      // 0x9A
-  Spirit_WriteReg(SYNTH_CONFIG1_BASE, 91);       // 0x9E (SYNTH_CONFIG[1])  fREF = fXO frequency
+  Spirit_WriteReg(SYNTH_CONFIG1_BASE, 91);       // fREF = fXO frequency  delicka krystalu
 
-  // SYNT0 - SYNT3
+  // nastaveni syntezatoru SYNT0 - SYNT3
 #ifdef USE_SPIRIT1_868MHz  // for 848 MHz
-  Spirit_WriteReg(8, 6);    // SYNT3_BASE
-  Spirit_WriteReg(9, 130);  // SYNT2_BASE
-  Spirit_WriteReg(10,143);  // SYNT1_BASE
-  Spirit_WriteReg(11, 89);  // SYNT0_BASE
+  Spirit_WriteReg(SYNT3_BASE, 6);
+  Spirit_WriteReg(SYNT2_BASE, 130);
+  Spirit_WriteReg(SYNT1_BASE, 143);
+  Spirit_WriteReg(SYNT0_BASE, 89);
 #endif
 
 #ifdef USE_SPIRIT1_915MHz  // for 915 MHz
-  Spirit_WriteReg(8, 134);
-  Spirit_WriteReg(9, 220);
-  Spirit_WriteReg(10, 204);
-  Spirit_WriteReg(11, 201);
+  Spirit_WriteReg(SYNT3_BASE, 134);
+  Spirit_WriteReg(SYNT2_BASE, 220);
+  Spirit_WriteReg(SYNT1_BASE, 204);
+  Spirit_WriteReg(SYNT0_BASE, 201);
 #endif
 
-  Spirit_WriteReg(158, 219);       // 0x9E (SYNTH_CONFIG[1]) fREF = fXO frequency / 2
-
-#ifdef USE_SPIRIT1_868MHz  // for 848 MHz
-  Spirit_WriteReg(8, 13);
-  Spirit_WriteReg(9, 5);
-  Spirit_WriteReg(10, 30);
-  Spirit_WriteReg(11, 177);
-#endif
-
-#ifdef USE_SPIRIT1_915MHz  // for 915 MHz
-  Spirit_WriteReg(8, 141);
-  Spirit_WriteReg(9, 185);
-  Spirit_WriteReg(10, 153);
-  Spirit_WriteReg(11, 145);
-#endif
-
-
-  // calibration
+  // start calibration
   Spirit_WriteReg(VCO_CONFIG_BASE, 0x25);  // Set the VCO current
   Spirit_WriteReg(PROTOCOL2_BASE, PROTOCOL2_VCO_CALIBRATION_MASK); // enable the automatic VCO calibration
 
@@ -227,23 +210,10 @@ void Spirit_InitRegs(bool bMaster)
   Spirit_WriteCommand(COMMAND_READY, MC_STATE_READY);
 
   Spirit_WriteReg(PROTOCOL2_BASE, 0); // disable the automatic VCO calibration
-  Spirit_WriteReg(SYNTH_CONFIG1_BASE, 91);       // fREF = fXO frequency
-
-#ifdef USE_SPIRIT1_868MHz  // for 848 MHz
-  Spirit_WriteReg(8, 6);
-  Spirit_WriteReg(9, 130);
-  Spirit_WriteReg(10, 143);
-  Spirit_WriteReg(11, 89);
-#endif
-
-#ifdef USE_SPIRIT1_915MHz  // for 915 MHz
-  Spirit_WriteReg(8, 134);
-  Spirit_WriteReg(9, 220);
-  Spirit_WriteReg(10, 204);
-  Spirit_WriteReg(11, 201);
-#endif
 
   Spirit_WriteReg(VCO_CONFIG_BASE, 17);    // 0xA1  Set the VCO current
+
+  // end calibration
 
 }
 

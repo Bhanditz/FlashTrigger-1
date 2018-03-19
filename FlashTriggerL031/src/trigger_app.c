@@ -213,17 +213,16 @@ void App_Exec(void)
       }
     }
 
-#if defined(USE_LOW_POWER_MODE)
-    Enter_LP_mode();
-#endif
     break;
   }
 
+  // kontrola casovace vypnuti (do Standby modu)
   if (GetOffTime() == 0)
   {
     Gpio_StandbyMode();
   }
 
+  // kontrola stisku tlacitka
   if (Gpio_IsButtonPressed_ms())
   {
     // Todo: zde by se mel resit stisk tlacitka pri MANUAL modu
@@ -231,6 +230,7 @@ void App_Exec(void)
     Gpio_Off();
   }
 
+  // vyhodnoceni zablesku
   if (g_bFlashFlag)
   {
     if (App_CheckFlash())
@@ -483,7 +483,7 @@ void Programming()
 
 void App_WaitAfterFlash(void)
 {
-  // Todo: wait 5 ms pro odezneni zablesku
+  // wait 5 ms pro odezneni zablesku
   g_nDelayTimer = 100;  // 100 * 50 us
   while (g_nDelayTimer);
   g_bFlashFlag = false;

@@ -36,19 +36,20 @@
 #define OPTO_OUTPUT_OFF                 (OPTO_OUTPUT_GPIO_PORT->BRR = OPTO_OUTPUT_PIN)
 #define OPTO_OUTPUT_ON                  (OPTO_OUTPUT_GPIO_PORT->BSRR = OPTO_OUTPUT_PIN)
 
-#define ADC_OPTO_INPUT                  ADC_CHSELR_CHSEL1
+#define ADC_OPTO_INPUT                  ADC_CHSELR_CHSEL1   // vstup ADC
 
-#define FLASH_DURATION_MS               6
+#define FLASH_DURATION_MS               6           // delka impulsu na tyristoru spinani blesku
 
-Ptr_OnAdcConv g_pOnAdcConv = NULL;
-Ptr_OnTimer g_pOnTimer = NULL;
+Ptr_OnAdcConv g_pOnAdcConv = NULL;      // callback od INT prevodniku
+Ptr_OnTimer g_pOnTimer = NULL;          // callback od ??? (mod snifferu?)
 
-uint16_t g_nLedInterval;
-uint16_t g_nFlashInterval_ms;
+uint16_t g_nLedInterval;                // citac delky svitu LED
+uint16_t g_nFlashInterval_ms;           // citac delky impulsu na tyristoru
 
 volatile bool g_bButtonPressed = true;
 volatile uint16_t g_nButtonStateDuration;
 
+// inicializace GPIO
 void Gpio_Init(void)
 {
   RCC->IOPENR |= RCC_IOPENR_GPIOAEN | RCC_IOPENR_GPIOCEN;
@@ -69,6 +70,7 @@ void Gpio_Init(void)
   SetSysTickCallback(Gpio_SysTickCallback);
 }
 
+// inicializace ADC pro snimani optodiody
 void Gpio_OptoInit(Ptr_OnAdcConv pOnAdcConv)
 {
   g_pOnAdcConv = pOnAdcConv;
@@ -213,10 +215,10 @@ void Gpio_FlashBlink()
   FLASH_ON;
 }
 
-// pomale zhasinani LED
+// pomale zhasinani LED (dynamicka zmena PWN LED)
 void Gpio_LedOffDiming()
 {
-  uint16_t led_range = 900;
+  uint16_t led_range = 900;  // delka zhasinani
   uint16_t led_rate = led_range;
 
   while (led_rate)
@@ -246,6 +248,7 @@ uint16_t Gpio_IsButtonPressed_ms()
   return 0;
 }
 
+// vypnuti
 void Gpio_Off(void)
 {
   Gpio_LedOffDiming();
@@ -253,13 +256,14 @@ void Gpio_Off(void)
   Gpio_StandbyMode();
 }
 
+// prechod Standby modu
 void Gpio_StandbyMode(void)
 {
   Spirit_EnterShutdown();
 
   // to standby
-  RCC->APB1ENR |= RCC_APB1ENR_PWREN; // RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
-  PWR->CSR |= PWR_CSR_EWUP1;  // PWR_WakeUpPinCmd(PWR_WakeUpPin_1, ENABLE);
+  RCC->APB1ENR |= RCC_APB1ENR_PWREN;  // PWR enable
+  PWR->CSR |= PWR_CSR_EWUP1;          // Enable WKUP pin 1
 
   PWR->CR |= PWR_CR_CWUF;  // Clear Wakeup flag
   PWR->CR |= PWR_CR_CSBF;  // clear Standby flag
@@ -274,6 +278,7 @@ void Gpio_StandbyMode(void)
 
 void Gpio_SysTickCallback()
 {
+  // odmereni delky sviceni LED
   if (g_nLedInterval)
   {
     g_nLedInterval--;
@@ -283,6 +288,7 @@ void Gpio_SysTickCallback()
     }
   }
 
+  // odmereni delky impulsu na tyristoru
   if (g_nFlashInterval_ms)
   {
     g_nFlashInterval_ms--;
@@ -292,7 +298,7 @@ void Gpio_SysTickCallback()
     }
   }
 
-  // obsluha tlacitka
+  // obsluha tlacitka (odstraneni zakmitu)
 #define DBNC_CNT  5   // e.g. 20ms with 5ms tick
   if ((GetTicks_ms() & 0b11) == 0) // kazde 4 ms
   {
