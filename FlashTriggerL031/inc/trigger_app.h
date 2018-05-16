@@ -36,7 +36,7 @@
 #define POWER_DBM                   11.6
 #define POWER_INDEX                 7
 
-#define RECEIVE_TIMEOUT             2100.0 // master vysila CHECK po 2000ms
+#define RECEIVE_TIMEOUT             2200.0 // master vysila CHECK po 2000ms
 #define RSSI_THRESHOLD              -120
 
 /*  Packet configuration parameters  */

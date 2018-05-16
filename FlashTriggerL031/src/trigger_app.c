@@ -88,19 +88,20 @@ uint8_t RxBuffer[MAX_BUFFER_LEN];
 
 SpiritIrqs xIrqStatus;
 
-volatile FlagStatus xRxDoneFlag = RESET;
-volatile FlagStatus xTxDoneFlag = RESET;
+volatile FlagStatus g_RxDoneFlag = RESET;
+volatile FlagStatus g_RXtimeout = RESET;
+volatile FlagStatus g_RXdataDisc = RESET;
+
+volatile FlagStatus g_TxDoneFlag = RESET;
 volatile FlagStatus cmdFlag = RESET;
 volatile FlagStatus xStartRx = RESET;
-volatile FlagStatus rx_timeout = RESET;
-volatile FlagStatus exitTime = RESET;
 
 uint16_t exitCounter = 0;
 uint8_t TxFrameBuff[MAX_BUFFER_LEN];
 
 AppState_t g_eState = APP_STATE_IDLE;
 
-uint8_t g_Master = 0;
+uint8_t g_bMaster = 0;
 
 uint16_t g_nOptoValue;
 
@@ -146,19 +147,23 @@ void App_Exec(void)
     break;
 
   case APP_STATE_WAIT_FOR_RX_DONE:
-    if((RESET != xRxDoneFlag)||(RESET != rx_timeout)||(SET != exitTime))
+    if (g_RxDoneFlag)
     {
-      if((rx_timeout == SET)||(exitTime == RESET))
-      {
-        rx_timeout = RESET;
-        g_eState = APP_STATE_START_RX;
-      }
-      else if(xRxDoneFlag)
-      {
-        xRxDoneFlag = RESET;
-        g_eState = APP_STATE_DATA_RECEIVED;
-      }
+      // paket prijat
+      g_RxDoneFlag = RESET;
+      g_eState = APP_STATE_DATA_RECEIVED;
     }
+    else if (g_RXtimeout || g_RXdataDisc)
+    {
+      // vyprsel timeout, nastavime novy prijem
+      g_RXtimeout = RESET;
+      g_RXdataDisc = RESET;
+      SpiritRefreshStatus();
+      SpiritStatus st = g_xStatus;
+//      Spirit_Calibrate(g_bMaster);    // neprijaty CHECK, provedeme kalibraci
+      g_eState = APP_STATE_START_RX;
+    }
+
     break;
 
   case APP_STATE_DATA_RECEIVED:
@@ -196,15 +201,16 @@ void App_Exec(void)
     break;
 
   case APP_STATE_WAIT_FOR_TX_DONE:
-    if(xTxDoneFlag)
+    if(g_TxDoneFlag)
     {
-      xTxDoneFlag = RESET;
+      g_TxDoneFlag = RESET;
+//      Spirit_Calibrate(g_bMaster);
       g_eState = APP_STATE_IDLE;
     }
     break;
 
   case APP_STATE_IDLE:
-    if (g_Master)
+    if (g_bMaster)
     {
       if (nLastCheckTime + CHECK_INTERVAL_MS < GetTicks_ms())
       {
@@ -255,10 +261,10 @@ void App_Init()
   SetOffInterval(STD_OFF_INTERVAL_MS);
 
   // zjistime, jestli jsme MASTER nebo SLAVE
-  g_Master = Gpio_IsMaster();
+  g_bMaster = Gpio_IsMaster();
 
   // povesime funkci na preruseni podle toho jestli budeme vysilat (MASTER) nebo prijimat (SLAVE)
-  if (g_Master)
+  if (g_bMaster)
   {
     Spirit_Init(OnSpiritInterruptHandlerMaster);
   }
@@ -275,7 +281,7 @@ void App_Init()
 
   g_eMode = APP_MODE_OPTO;
   g_eState = APP_STATE_IDLE;
-  if (g_Master)
+  if (g_bMaster)
   {
     if (nPressDuration > 1000)
     {
@@ -315,16 +321,37 @@ void App_Init()
   Spirit1GpioIrqInit(&xGpioIRQ);
 
   // Spirit Radio config
-  Spirit_InitRegs(g_Master);
+  Spirit_InitRegs(g_bMaster);
 
   Spirit_SetPowerRegs();  // Spirit Radio set power
   // Spirit_ProtocolInitRegs();  // Spirit Packet config
 
   App_SpiritBasicProtocolInit();
 
+  // set SPIRIT1 IRQ
+  SpiritIrqDeInit(NULL);
+  SpiritIrqClearStatus();
+  if (g_bMaster)
+  {
+    SpiritIrq(TX_DATA_SENT, S_ENABLE);
+    SpiritIrq(TX_FIFO_ERROR, S_ENABLE);
+    SpiritIrq(MAX_RE_TX_REACH, S_ENABLE);
+  }
+  else
+  {
+    SpiritIrq(RX_DATA_READY,S_ENABLE);
+    SpiritIrq(RX_DATA_DISC, S_ENABLE);
+    SpiritIrq(RX_TIMEOUT, S_ENABLE);
+    SpiritIrq(RX_FIFO_ERROR, S_ENABLE);
+//    SpiritIrq(VALID_SYNC,S_ENABLE);
+  }
+
   // Todo: musi to tu byt pro master???
-  Spirit_EnableSQIRegs();
-  Spirit_SetRssiTHRegs();
+  Spirit_EnableSQI();
+  Spirit_SetRssiThreshold();
+
+//  uint8_t buffer[4];
+//  Spirit_ReadRegs(PCKT_FLT_OPTIONS_BASE, 4, buffer);
 
 //  SRadioInit RadioInitStruct;
 //  SpiritRadioGetInfo(&RadioInitStruct);
@@ -344,7 +371,7 @@ void App_Init()
   Gpio_LedBlink(200);
 
   // pro MASTER nakonfigurovat optodiodu
-  if (g_Master)
+  if (g_bMaster)
   {
     Gpio_OptoInit(App_ADCGetConv);
   }
@@ -355,7 +382,7 @@ void App_Init()
   }
 
   // pro MASTER konfigurace opto snimani
-  if (g_Master)
+  if (g_bMaster)
   {
     g_nTimeCounter = 0;
     g_bTimeCounterStop = false;
@@ -531,8 +558,7 @@ void App_SendBuffer(uint8_t* pBuffer, uint8_t nLength)
 void App_ReceiveBuffer(uint8_t *RxFrameBuff, uint8_t cRxlen)
 {
   /*float rRSSIValue = 0;*/
-  exitTime = SET;
-  exitCounter = TIME_TO_EXIT_RX;
+//  exitTime = SET;
 
 //  PktBasicAddressesInit PktBasicAddresses;
 //  SpiritPktBasicGetAddressesInfo(&PktBasicAddresses);
@@ -683,7 +709,7 @@ void OnSpiritInterruptHandlerMaster(void)
   SpiritIrqGetStatus(&xIrqStatus);
   if(xIrqStatus.IRQ_TX_DATA_SENT || xIrqStatus.IRQ_MAX_RE_TX_REACH)
   {
-    xTxDoneFlag = SET;
+    g_TxDoneFlag = SET;
   }
 }
 
@@ -694,33 +720,20 @@ void OnSpiritInterruptHandlerSlave(void)
   /* Check the SPIRIT RX_DATA_READY IRQ flag */
   if((xIrqStatus.IRQ_RX_DATA_READY))
   {
-    xRxDoneFlag = SET;
-    uint8_t nLength;
-    Spirit1GetRxPacket(RxBuffer, &nLength);
-
-    if (memcmp(RxBuffer, aCheckBroadcast, sizeof (aCheckBroadcast)) == 0)
-    {
-      Gpio_LedBlink(50);
-    }
-    else if (memcmp(RxBuffer, aFlashBroadcast, sizeof (aFlashBroadcast)) == 0)
-    {
-      Gpio_FlashBlink();
-      SetOffInterval(STD_OFF_INTERVAL_MS);
-    }
+    g_RxDoneFlag = SET;
   }
 
   /* Restart receive after receive timeout*/
   if (xIrqStatus.IRQ_RX_TIMEOUT)
   {
-    rx_timeout = SET;
-    SpiritCmdStrobeRx();
+    g_RXtimeout = SET;
   }
 
   /* Check the SPIRIT RX_DATA_DISC IRQ flag */
   if(xIrqStatus.IRQ_RX_DATA_DISC)
   {
     /* RX command - to ensure the device will be ready for the next reception */
-    SpiritCmdStrobeRx();
+    g_RXdataDisc = SET;
   }
 }
 
@@ -779,7 +792,7 @@ void OnSpiritInterruptHandlerSlaveSniffer(void)
   /* Check the SPIRIT RX_DATA_READY IRQ flag */
   if((xIrqStatus.IRQ_RX_DATA_READY))
   {
-    xRxDoneFlag = SET;
+    g_RxDoneFlag = SET;
     uint8_t nLength;
     Spirit1GetRxPacket(RxBuffer, &nLength);
 
@@ -799,7 +812,7 @@ void OnSpiritInterruptHandlerSlaveSniffer(void)
   /* Restart receive after receive timeout*/
   if (xIrqStatus.IRQ_RX_TIMEOUT)
   {
-    rx_timeout = SET;
+    g_RXtimeout = SET;
     SpiritTimerReloadStrobe();
     App_PrepareSniffing();
 //    SpiritCmdStrobeRx();

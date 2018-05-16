@@ -154,6 +154,13 @@ void Spirit_InitRegs(bool bMaster)
   Spirit_WriteReg(154, 227);      // 0x9A
   Spirit_WriteReg(SYNTH_CONFIG1_BASE, 91);       // fREF = fXO frequency  delicka krystalu
 
+  Spirit_SetFrequency();
+
+//  Spirit_Calibrate(bMaster);
+}
+
+void Spirit_SetFrequency()
+{
   // nastaveni syntezatoru SYNT0 - SYNT3
 #ifdef USE_SPIRIT1_868MHz  // for 848 MHz
   Spirit_WriteReg(SYNT3_BASE, 6);
@@ -168,7 +175,10 @@ void Spirit_InitRegs(bool bMaster)
   Spirit_WriteReg(SYNT1_BASE, 204);
   Spirit_WriteReg(SYNT0_BASE, 201);
 #endif
+}
 
+void Spirit_Calibrate(bool bMaster)
+{
   // start calibration
   Spirit_WriteReg(VCO_CONFIG_BASE, 0x25);  // Set the VCO current
   Spirit_WriteReg(PROTOCOL2_BASE, PROTOCOL2_VCO_CALIBRATION_MASK); // enable the automatic VCO calibration
@@ -211,10 +221,9 @@ void Spirit_InitRegs(bool bMaster)
 
   Spirit_WriteReg(PROTOCOL2_BASE, 0); // disable the automatic VCO calibration
 
-  Spirit_WriteReg(VCO_CONFIG_BASE, 17);    // 0xA1  Set the VCO current
+  Spirit_WriteReg(VCO_CONFIG_BASE, 17);    // Set the VCO current
 
   // end calibration
-
 }
 
 void Spirit_SetPowerRegs(void)
@@ -225,13 +234,18 @@ void Spirit_SetPowerRegs(void)
   Spirit_WriteReg(PA_POWER0_BASE, PA_POWER0_PA_LEVEL_MAX_INDEX_7);
 }
 
-void Spirit_EnableSQIRegs(void)
+void Spirit_EnableSQI(void)
 {
   Spirit_WriteReg(QI_BASE, 2);
 }
 
-void Spirit_SetRssiTHRegs(void)
+void Spirit_SetRssiThreshold(void)
 {
   Spirit_WriteReg(RSSI_TH_BASE, 20);
 
+}
+
+void Spirit_ReadRegs(uint8_t nRegAddr, uint8_t nLenght, uint8_t *pBuffer)
+{
+  SPIspirit_ReadRegisters(nRegAddr, nLenght, pBuffer);
 }

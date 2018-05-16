@@ -40,6 +40,7 @@
  *
  * v0.1 - prvni verze (1.3.2018)
  * v0.2 - opravena kalibrace (v DEBUG konfiguraci stiha expozicni cas 1/60s)
+ * v0.3 - problemy pri zmene teploty -> odstranena manualni kalibrace
  */
 
 
