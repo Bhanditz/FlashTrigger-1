@@ -112,8 +112,6 @@ void App_Exec(void)
       // vyprsel timeout, nastavime novy prijem
       g_RXtimeout = RESET;
       g_RXdataDisc = RESET;
-      SpiritRefreshStatus();
-      SpiritStatus st = g_xStatus;
 //      Spirit_Calibrate(g_bMaster);    // neprijaty CHECK, provedeme kalibraci
       g_eState = APP_STATE_START_RX;
     }
@@ -123,7 +121,17 @@ void App_Exec(void)
   case APP_STATE_DATA_RECEIVED:
     {
       Spirit1GetRxPacket(RxBuffer, &nLength);
-      /*rRSSIValue = Spirit1GetRssiTH();*/
+
+      /* Kontrola sily signalu
+       *
+       * vzdalenost 20cm: pozice paralelne RSSI=130
+       *                         kolmo     RSSI=150
+       * vzdalenost   2m: pozice paralelne RSSI=113
+       *                         kolmo     RSSI=100
+       * vzdalenost >30m: pozice paralelne RSSI= 55 (za rohem)
+       *                         kolmo     RSSI=<50 (vypadava spojeni)
+      */
+      uint8_t RSSIValue = SpiritQiGetRssi();
 
       g_eState = APP_STATE_START_RX;
       if (memcmp(RxBuffer, aCheckBroadcast, sizeof (aCheckBroadcast)) == 0)
@@ -263,10 +271,10 @@ void App_Init()
 
   SpiritManagementWaExtraCurrent();
 
-  uint8_t v;
-  StatusBytes sb;
-  sb = SpiritSpiReadRegisters(DEVICE_INFO1_PARTNUM, 1, &v);
-  sb = SpiritSpiReadRegisters(DEVICE_INFO0_VERSION, 1, &v);
+//  uint8_t v;
+//  StatusBytes sb;
+//  sb = SpiritSpiReadRegisters(DEVICE_INFO1_PARTNUM, 1, &v);
+//  sb = SpiritSpiReadRegisters(DEVICE_INFO0_VERSION, 1, &v);
 
   // wait for READY state and set XTAL frequency
   SpiritManagementIdentificationRFBoard();
@@ -278,7 +286,6 @@ void App_Init()
   Spirit_InitRegs(g_bMaster);
 
   Spirit_SetPowerRegs();  // Spirit Radio set power
-  // Spirit_ProtocolInitRegs();  // Spirit Packet config
 
   Spirit_BasicProtocolInit();
 
@@ -304,22 +311,8 @@ void App_Init()
   Spirit_EnableSQI();
   Spirit_SetRssiThreshold();
 
-//  uint8_t buffer[4];
-//  Spirit_ReadRegs(PCKT_FLT_OPTIONS_BASE, 4, buffer);
-
 //  SRadioInit RadioInitStruct;
 //  SpiritRadioGetInfo(&RadioInitStruct);
-  /*
-   * RadioInitStruct  SRadioInit  {...}
-    nXtalOffsetPpm     int16_t           0
-    lFrequencyBase     uint32_t          914999962
-    nChannelSpace      uint32_t          21350
-    cChannelNumber     uint8_t           0 '\0'
-    xModulationSelect  ModulationSelect  FSK
-    lDatarate          uint32_t          115203
-    lFreqDev           uint32_t          61035
-    lBandwidth         uint32_t          216057
-   */
 
   // start blik
   Gpio_LedBlink(200);
@@ -543,7 +536,7 @@ void App_ReceiveBuffer(uint8_t *RxFrameBuff, uint8_t cRxlen)
 void App_FlashActive()
 {
   g_eState = APP_STATE_SEND_FLASH;
-  Timer_SetOffInterval(STD_OFF_INTERVAL_MS);
+  Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
 }
 
 void App_ADCGetConv(uint16_t ADCValue)
@@ -687,7 +680,7 @@ void OnSpiritInterruptHandlerSlaveSniffer(void)
     else if (memcmp(RxBuffer, aFlashBroadcast, sizeof (aFlashBroadcast)) == 0)
     {
       Gpio_FlashBlink();
-      Timer_SetOffInterval(STD_OFF_INTERVAL_MS);
+      Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
     }
 
     App_PrepareSniffing();

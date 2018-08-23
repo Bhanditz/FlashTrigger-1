@@ -153,6 +153,8 @@ void Spirit_WriteCommand(uint8_t nCommand, SpiritState state)
 
 void Spirit_InitRegs(bool bMaster)
 {
+//  SpiritRadioInit(&xRadioInit);
+
   Spirit_WriteReg(SYNTH_CONFIG0_BASE, 160);      // 0x9F  split time=3.47 ns
   Spirit_WriteCommand(COMMAND_STANDBY, MC_STATE_STANDBY);
 
@@ -160,7 +162,7 @@ void Spirit_InitRegs(bool bMaster)
   Spirit_WriteCommand(COMMAND_READY, MC_STATE_READY);
 
   Spirit_WriteReg(0xA3, 53);                    // (DEM_CONFIG)  enable initialization
-  Spirit_WriteReg(IF_OFFSET_ANA_BASE, 54);      // Intermediate frequency setting for the analog RF synthesizer.
+  Spirit_WriteReg(IF_OFFSET_ANA_BASE, 0x36);      // Intermediate frequency setting for the analog RF synthesizer.
 
   Spirit_WriteReg(ANA_FUNC_CONF0_BASE, 192);
 
@@ -179,12 +181,12 @@ void Spirit_InitRegs(bool bMaster)
   // reset hodnoty (0x83, 0xA) jsou pro 38400
   // vzorec Excelu pro vypocet nastaveni datarate '=26000000*((256+AN14)*POWER(2;AN15))/POWER(2;28)' AN14=mantisa, AN15=exponent, AN16=vysledek
 
-  Spirit_WriteReg(MOD1_BASE, 46);   // The mantissa value of the DATARATE equation (131/0x83 pro 38400)
-  Spirit_WriteReg(MOD0_BASE, 12);   // The exponent value of the DATARATE equation ( 10/0x0A pro 38400)
+  Spirit_WriteReg(MOD1_BASE, 131);   // The mantissa value of the DATARATE equation (131/0x83 pro 38400) 19200:mant=131,exp=9
+  Spirit_WriteReg(MOD0_BASE, 10);   // The exponent value of the DATARATE equation ( 10/0x0A pro 38400)
   SpiritRadioSetModulation(MODULATION_SELECT);
 
-  Spirit_WriteReg(FDEV0_BASE, 98);  // Sets the Mantissa and exponent of frequency deviation (frequency separation/2) and PLL or DLL alogrithm from clock recovery in RX digital demod
-  Spirit_WriteReg(CHFLT_BASE, 2);   // RX Channel Filter Bandwidth
+  Spirit_WriteReg(FDEV0_BASE, 0x45);  // Sets the Mantissa and exponent of frequency deviation (frequency separation/2) and PLL or DLL alogrithm from clock recovery in RX digital demod
+  Spirit_WriteReg(CHFLT_BASE, 0x23);   // Channel Filter Bandwidth (100kHz)
 
   Spirit_WriteReg(AFC2_BASE, 200);  // Automatic frequency compensation algorithm parameters (FSK/GFSK/MSK)
   Spirit_WriteReg(153, 128);      // 0x99
