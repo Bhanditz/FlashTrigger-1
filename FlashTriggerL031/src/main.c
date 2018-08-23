@@ -41,6 +41,10 @@
  * v0.1 - prvni verze (1.3.2018)
  * v0.2 - opravena kalibrace (v DEBUG konfiguraci stiha expozicni cas 1/60s)
  * v0.3 - problemy pri zmene teploty -> odstranena manualni kalibrace
+ * v0.4(ve vyvoji) - zmena modulace na GFSK_BT1
+ * Todo: blikani slave podle sily signalu
+ * Todo: snizit datarate na 19200
+ *
  */
 
 
@@ -52,7 +56,6 @@ int main(void)
 //  SetMSI(msi_4Mhz);
 
   SystemCoreClockUpdate();
-
 
   App_Init();
 

@@ -25,52 +25,6 @@ SGpioInit xGpioIRQ =
   SPIRIT_GPIO_DIG_OUT_IRQ
 };
 
-/**
-* @brief Radio structure fitting
-*/
-SRadioInit xRadioInit =
-{
-  XTAL_OFFSET_PPM,
-  BASE_FREQUENCY,
-  CHANNEL_SPACE,
-  CHANNEL_NUMBER,
-  MODULATION_SELECT,
-  DATARATE,
-  FREQ_DEVIATION,
-  BANDWIDTH
-};
-
-
-/**
-* @brief Packet Basic structure fitting
-*/
-PktBasicInit xBasicInit =
-{
-  PREAMBLE_LENGTH,
-  SYNC_LENGTH,
-  SYNC_WORD,
-  LENGTH_TYPE,
-  LENGTH_WIDTH,
-  CRC_MODE,
-  CONTROL_LENGTH,
-  EN_ADDRESS,
-  EN_FEC,
-  EN_WHITENING
-};
-
-/**
-* @brief Address structure fitting
-*/
-PktBasicAddressesInit xAddressInit =
-{
-  EN_FILT_MY_ADDRESS,
-  MY_ADDRESS,
-  EN_FILT_MULTICAST_ADDRESS,
-  MULTICAST_ADDRESS,
-  EN_FILT_BROADCAST_ADDRESS,
-  BROADCAST_ADDRESS
-};
-
 #define CHECK_INTERVAL_MS         2500
 
 #define FLASH_LIMIT_STD           2
@@ -180,7 +134,7 @@ void App_Exec(void)
       {
         Gpio_FlashBlink();
         Gpio_LedBlink(50);
-        SetOffInterval(STD_OFF_INTERVAL_MS);
+        Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
       }
     }
     break;
@@ -212,10 +166,10 @@ void App_Exec(void)
   case APP_STATE_IDLE:
     if (g_bMaster)
     {
-      if (nLastCheckTime + CHECK_INTERVAL_MS < GetTicks_ms())
+      if (nLastCheckTime + CHECK_INTERVAL_MS < Timer_GetTicks_ms())
       {
         g_eState = APP_STATE_SEND_CHECK;
-        nLastCheckTime = GetTicks_ms();
+        nLastCheckTime = Timer_GetTicks_ms();
       }
     }
 
@@ -223,7 +177,7 @@ void App_Exec(void)
   }
 
   // kontrola casovace vypnuti (do Standby modu)
-  if (GetOffTime() == 0)
+  if (Gpio_GetOffTime() == 0)
   {
     Gpio_StandbyMode();
   }
@@ -243,7 +197,7 @@ void App_Exec(void)
     {
       // naprogramovana sekvence souhlasi
       g_eState = APP_STATE_SEND_FLASH;
-      SetOffInterval(STD_OFF_INTERVAL_MS);
+      Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
     }
     else
     {
@@ -254,11 +208,11 @@ void App_Exec(void)
 
 void App_Init()
 {
-  TimerInit();
+  Timer_Init();
 
   Gpio_Init();
 
-  SetOffInterval(STD_OFF_INTERVAL_MS);
+  Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
 
   // zjistime, jestli jsme MASTER nebo SLAVE
   g_bMaster = Gpio_IsMaster();
@@ -275,9 +229,9 @@ void App_Init()
   }
 
   // cekat na uvolneni tlacitka a pro MASTER zmerime delku stisknuti
-  uint32_t nStartTime = GetTicks_ms();
+  uint32_t nStartTime = Timer_GetTicks_ms();
   while (Gpio_IsButtonPressed_ms());
-  uint32_t nPressDuration = GetTicks_ms() - nStartTime;
+  uint32_t nPressDuration = Timer_GetTicks_ms() - nStartTime;
 
   g_eMode = APP_MODE_OPTO;
   g_eState = APP_STATE_IDLE;
@@ -304,8 +258,8 @@ void App_Init()
   Spirit_ExitShutdown();
 
   // wait for SPIRIT RESET duration
-  uint32_t nTime = GetTicks_ms();
-  while (GetTicks_ms() - nTime < 2);
+  uint32_t nTime = Timer_GetTicks_ms();
+  while (Timer_GetTicks_ms() - nTime < 2);
 
   SpiritManagementWaExtraCurrent();
 
@@ -326,7 +280,7 @@ void App_Init()
   Spirit_SetPowerRegs();  // Spirit Radio set power
   // Spirit_ProtocolInitRegs();  // Spirit Packet config
 
-  App_SpiritBasicProtocolInit();
+  Spirit_BasicProtocolInit();
 
   // set SPIRIT1 IRQ
   SpiritIrqDeInit(NULL);
@@ -405,7 +359,7 @@ void App_Init()
       uint8_t nCount = g_nFlashes - 1;
       while (nCount--)
       {
-        Delay_ms(500);
+        Timer_Delay_ms(500);
         Gpio_LedBlink(200);
       }
     }
@@ -459,7 +413,7 @@ void Programming()
   g_nFlashLimit = FLASH_LIMIT_PRG;
 
   g_nFlashInterval = 0;
-  SetOffInterval(PRG_OFF_INTERVAL_MS);
+  Gpio_SetOffInterval(PRG_OFF_INTERVAL_MS);
 
   // cekani na prvni zablesk
   while (!g_bFlashFlag)
@@ -470,7 +424,7 @@ void Programming()
       Gpio_Off();
     }
 
-    if (!GetOffTime())
+    if (!Gpio_GetOffTime())
     {
       g_eState = APP_STATE_START;
       return;
@@ -585,81 +539,11 @@ void App_ReceiveBuffer(uint8_t *RxFrameBuff, uint8_t cRxlen)
   Spirit1StartRx();
 }
 
-/** @brief  This function initializes the BASIC Packet handler of spirit1
-* @param  None
-* @retval None
-*/
-
-/*
- *   |   1-32   | 1-4  | 0-16 bit |   0-1   |   0-4   | 0-65535 | 0-3 |
- *   | Preamble | Sync |  Length  | Address | Control | Payload | CRC |
- *
- *  Preamble (programmable field): the length of the preamble is programmable from 1 to 32
-    bytes by the PREAMBLE_LENGTH field of the PCKTCTRL2 register. Each preamble byte is
-    a '10101010' binary sequence.
-
-    Sync (programmable field): the length of the synchronization field is programmable (from 1
-    to 4 bytes) through dedicated registers. The SYNC word is programmable through registers
-    SYNC1, SYNC2, SYNC3, and SYNC4. If the programmed sync length is 1, then only SYNC
-    word is transmitted; if the programmed sync length is 2 then only SYNC1 and SYNC2 words
-    are transmitted and so on.
-
-    Length (programmable/optional field): the packet length field is an optional field that is
-    defined as the cumulative length of Address, Control, and Payload fields. It is possible to
-    support fixed and variable packet length. In fixed mode, the field length is not used.
-
-    Destination address (programmable/optional field): when the destination address filtering
-    is enabled in the receiver, the packet handler engine compares the destination address field
-    of the packet received with the value of register TX_SOURCE_ADDR. If broadcast address
-    and/or multicast address filtering are enabled, the packet handler engine compares the
-    destination address with the programmed broadcast and/or multicast address.
-
-    Control (programmable/optional field): is programmable from 0 to 4 bytes through the
-    CONTROL_LEN field of the PCKTCTRL4 register. Control fields of the packet can be set
-    using the TX_CTRL_FIELD[3:0] register.
-
-    Payload (programmable/optional field): the device supports both fixed and variable payload
-    length transmission from 0 to 65535 bytes.
- */
-
-void App_SpiritBasicProtocolInit(void)
-{
-  SpiritPktBasicSetFormat();
-
-  PktBasicInit xBasicInit=
-  {
-    .xPreambleLength = PREAMBLE_LENGTH,
-    .xSyncLength = SYNC_LENGTH,
-    .lSyncWords = SYNC_WORD,
-    .xFixVarLength = LENGTH_TYPE,
-    .cPktLengthWidth = LENGTH_WIDTH,
-    .xCrcMode = CRC_MODE,
-    .xControlLength = CONTROL_LENGTH,
-    .xAddressField = S_ENABLE,
-    .xFec = EN_FEC,
-    .xDataWhitening = EN_WHITENING
-  };
-
-  // Spirit Packet config
-  SpiritPktBasicInit(&xBasicInit);
-
-  PktBasicAddressesInit xAddressInit=
-  {
-    .xFilterOnMyAddress = S_DISABLE,
-    .cMyAddress = MY_ADDRESS,
-    .xFilterOnMulticastAddress = S_DISABLE,
-    .cMulticastAddress = MULTICAST_ADDRESS,
-    .xFilterOnBroadcastAddress = S_DISABLE,
-    .cBroadcastAddress = BROADCAST_ADDRESS
-  };
-
-  SpiritPktBasicAddressesInit(&xAddressInit);
-}
 
 void App_FlashActive()
 {
   g_eState = APP_STATE_SEND_FLASH;
-  SetOffInterval(STD_OFF_INTERVAL_MS);
+  Timer_SetOffInterval(STD_OFF_INTERVAL_MS);
 }
 
 void App_ADCGetConv(uint16_t ADCValue)
@@ -803,7 +687,7 @@ void OnSpiritInterruptHandlerSlaveSniffer(void)
     else if (memcmp(RxBuffer, aFlashBroadcast, sizeof (aFlashBroadcast)) == 0)
     {
       Gpio_FlashBlink();
-      SetOffInterval(STD_OFF_INTERVAL_MS);
+      Timer_SetOffInterval(STD_OFF_INTERVAL_MS);
     }
 
     App_PrepareSniffing();

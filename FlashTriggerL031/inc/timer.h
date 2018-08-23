@@ -12,11 +12,16 @@
 
 typedef void(*PtrSysTickCallback) (void);
 
-void TimerInit();
-void Delay_ms(uint32_t delay_ms);
-uint32_t GetTicks_ms();
-void SetSysTickCallback(PtrSysTickCallback pFunction);
-void SetOffInterval(uint32_t nInterval_ms);
-uint32_t GetOffTime(void);
+void Timer_Init();
+void Timer_Delay_ms(uint32_t delay_ms);
+uint32_t Timer_GetTicks_ms();
+void Timer_SetSysTickCallback(PtrSysTickCallback pFunction);
 
+
+void TimerUs_init(void);
+void TimerUs_start(void);
+uint16_t TimerUs_get_microseconds(void);
+void TimerUs_delay(uint16_t microseconds);
+void TimerUs_clear(void);
+void TimerUs_stop(void);
 #endif /* TIMER_H_ */

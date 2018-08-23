@@ -7,15 +7,13 @@
 
 #include "spirit_spi.h"
 #include "spirit.h"
+#include "timer.h"
 
 #define SPIRIT1_CS_PIN                (1 << 1)
 #define SPIRIT1_CS_GPIO_PORT          GPIOB
 
 #define SPIRIT1_CS_ENABLE         (SPIRIT1_CS_GPIO_PORT->BRR = SPIRIT1_CS_PIN)
 #define SPIRIT1_CS_DISABLE        (SPIRIT1_CS_GPIO_PORT->BSRR = SPIRIT1_CS_PIN)
-
-#define CS_TO_SCLK_DELAY     (SystemCoreClock / 330000)  // wait podle SYSCLK
-#define CLK_TO_CS_DELAY      0x0030
 
 /* SPIRIT1_Spi_config_Headers */
 #define HEADER_WRITE_MASK     0x00                                /*!< Write mask for header byte*/
@@ -118,7 +116,13 @@ void SPIspirit_Active()
   /* Puts the SPI chip select low to start the transaction */
   SPIRIT1_CS_ENABLE;
 
-  for (volatile uint16_t i = 0; i < CS_TO_SCLK_DELAY; i++);
+  TimerUs_start();
+  while(TimerUs_get_microseconds() < 4)
+  {
+      continue;
+  }
+
+  TimerUs_stop();
 }
 
 void SPIspirit_Deactive()

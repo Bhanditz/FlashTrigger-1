@@ -45,6 +45,7 @@ Ptr_OnTimer g_pOnTimer = NULL;          // callback od ??? (mod snifferu?)
 
 uint16_t g_nLedInterval;                // citac delky svitu LED
 uint16_t g_nFlashInterval_ms;           // citac delky impulsu na tyristoru
+uint32_t g_nOffInterval;                // citani intervalu do vypnuti
 
 volatile bool g_bButtonPressed = true;
 volatile uint16_t g_nButtonStateDuration;
@@ -67,7 +68,7 @@ void Gpio_Init(void)
   // FLASH OUTPUT pin as output
   GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODE14)) | (GPIO_MODER_MODE14_0);
 
-  SetSysTickCallback(Gpio_SysTickCallback);
+  Timer_SetSysTickCallback(Gpio_SysTickCallback);
 }
 
 // inicializace ADC pro snimani optodiody
@@ -143,7 +144,7 @@ void Gpio_OptoInit(Ptr_OnAdcConv pOnAdcConv)
   ADC1->CR |= ADC_CR_ADSTART; /* Start the ADC conversion */
 
   // pockat na ustaleni svetelne hodnoty
-  Delay_ms(20);
+  Timer_Delay_ms(20);
 }
 
 void Gpio_DisableADC()
@@ -298,9 +299,15 @@ void Gpio_SysTickCallback()
     }
   }
 
+  // odmereni OFF intervalu
+  if (g_nOffInterval)
+  {
+    g_nOffInterval--;
+  }
+
   // obsluha tlacitka (odstraneni zakmitu)
 #define DBNC_CNT  5   // e.g. 20ms with 5ms tick
-  if ((GetTicks_ms() & 0b11) == 0) // kazde 4 ms
+  if ((Timer_GetTicks_ms() & 0b11) == 0) // kazde 4 ms
   {
 
     static uint8_t old_state = 0;
@@ -324,6 +331,16 @@ void Gpio_SysTickCallback()
     old_state = state;
   }
 
+}
+
+void Gpio_SetOffInterval(uint32_t nInterval_ms)
+{
+  g_nOffInterval = nInterval_ms;
+}
+
+uint32_t Gpio_GetOffTime(void)
+{
+  return g_nOffInterval;
 }
 
 void ADC1_COMP_IRQHandler(void)

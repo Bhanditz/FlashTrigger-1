@@ -28,6 +28,8 @@ void Gpio_LedOffDiming();
 uint16_t Gpio_IsButtonPressed_ms();
 void Gpio_Off(void);
 void Gpio_StandbyMode(void);
+void Gpio_SetOffInterval(uint32_t nInterval_ms);
+uint32_t Gpio_GetOffTime(void);
 
 void Gpio_SysTickCallback();
 

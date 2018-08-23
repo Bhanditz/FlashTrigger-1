@@ -7,8 +7,44 @@
 
 #include "spirit.h"
 #include "spirit_spi.h"
+#include "SPIRIT_Config.h"
 
-//#define USE_SPIRIT1_868MHz
+// Radio structure fitting
+SRadioInit xRadioInit =
+{
+  .nXtalOffsetPpm = XTAL_OFFSET_PPM,
+  .lFrequencyBase = BASE_FREQUENCY,
+  .nChannelSpace = CHANNEL_SPACE,
+  .cChannelNumber = CHANNEL_NUMBER,
+  .xModulationSelect = MODULATION_SELECT,
+  .lDatarate = DATARATE,
+  .lFreqDev = FREQ_DEVIATION,
+  .lBandwidth = BANDWIDTH
+};
+
+PktBasicInit xBasicInit=
+{
+  .xPreambleLength = PREAMBLE_LENGTH,
+  .xSyncLength = SYNC_LENGTH,
+  .lSyncWords = SYNC_WORD,
+  .xFixVarLength = LENGTH_TYPE,
+  .cPktLengthWidth = LENGTH_WIDTH,
+  .xCrcMode = CRC_MODE,
+  .xControlLength = CONTROL_LENGTH,
+  .xAddressField = S_ENABLE,
+  .xFec = EN_FEC,
+  .xDataWhitening = EN_WHITENING
+};
+
+PktBasicAddressesInit xAddressInit=
+{
+  .xFilterOnMyAddress = EN_FILT_MY_ADDRESS,
+  .cMyAddress = MY_ADDRESS,
+  .xFilterOnMulticastAddress = EN_FILT_MULTICAST_ADDRESS,
+  .cMulticastAddress = MULTICAST_ADDRESS,
+  .xFilterOnBroadcastAddress = EN_FILT_BROADCAST_ADDRESS,
+  .cBroadcastAddress = BROADCAST_ADDRESS
+};
 
 
 #define SPIRIT1_SDN_PIN             (1 << 2)  // out
@@ -145,6 +181,7 @@ void Spirit_InitRegs(bool bMaster)
 
   Spirit_WriteReg(MOD1_BASE, 46);   // The mantissa value of the DATARATE equation (131/0x83 pro 38400)
   Spirit_WriteReg(MOD0_BASE, 12);   // The exponent value of the DATARATE equation ( 10/0x0A pro 38400)
+  SpiritRadioSetModulation(MODULATION_SELECT);
 
   Spirit_WriteReg(FDEV0_BASE, 98);  // Sets the Mantissa and exponent of frequency deviation (frequency separation/2) and PLL or DLL alogrithm from clock recovery in RX digital demod
   Spirit_WriteReg(CHFLT_BASE, 2);   // RX Channel Filter Bandwidth
@@ -175,6 +212,56 @@ void Spirit_SetFrequency()
   Spirit_WriteReg(SYNT1_BASE, 204);
   Spirit_WriteReg(SYNT0_BASE, 201);
 #endif
+}
+
+
+/** @brief  This function initializes the BASIC Packet handler of spirit1
+* @param  None
+* @retval None
+*/
+
+/*
+ *   |   1-32   | 1-4  | 0-16 bit |   0-1   |   0-4   | 0-65535 | 0-3 |
+ *   | Preamble | Sync |  Length  | Address | Control | Payload | CRC |
+ *
+ *  Preamble (programmable field): the length of the preamble is programmable from 1 to 32
+    bytes by the PREAMBLE_LENGTH field of the PCKTCTRL2 register. Each preamble byte is
+    a '10101010' binary sequence.
+
+    Sync (programmable field): the length of the synchronization field is programmable (from 1
+    to 4 bytes) through dedicated registers. The SYNC word is programmable through registers
+    SYNC1, SYNC2, SYNC3, and SYNC4. If the programmed sync length is 1, then only SYNC
+    word is transmitted; if the programmed sync length is 2 then only SYNC1 and SYNC2 words
+    are transmitted and so on.
+
+    Length (programmable/optional field): the packet length field is an optional field that is
+    defined as the cumulative length of Address, Control, and Payload fields. It is possible to
+    support fixed and variable packet length. In fixed mode, the field length is not used.
+
+    Destination address (programmable/optional field): when the destination address filtering
+    is enabled in the receiver, the packet handler engine compares the destination address field
+    of the packet received with the value of register TX_SOURCE_ADDR. If broadcast address
+    and/or multicast address filtering are enabled, the packet handler engine compares the
+    destination address with the programmed broadcast and/or multicast address.
+
+    Control (programmable/optional field): is programmable from 0 to 4 bytes through the
+    CONTROL_LEN field of the PCKTCTRL4 register. Control fields of the packet can be set
+    using the TX_CTRL_FIELD[3:0] register.
+
+    Payload (programmable/optional field): the device supports both fixed and variable payload
+    length transmission from 0 to 65535 bytes.
+ */
+
+void Spirit_BasicProtocolInit(void)
+{
+  SpiritPktBasicSetFormat();
+
+  // Spirit Packet config
+  SpiritPktBasicInit(&xBasicInit);
+
+
+
+  SpiritPktBasicAddressesInit(&xAddressInit);
 }
 
 void Spirit_Calibrate(bool bMaster)
