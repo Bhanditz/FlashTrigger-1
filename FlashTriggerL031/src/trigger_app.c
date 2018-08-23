@@ -112,7 +112,6 @@ void App_Exec(void)
       // vyprsel timeout, nastavime novy prijem
       g_RXtimeout = RESET;
       g_RXdataDisc = RESET;
-//      Spirit_Calibrate(g_bMaster);    // neprijaty CHECK, provedeme kalibraci
       g_eState = APP_STATE_START_RX;
     }
 
@@ -122,7 +121,7 @@ void App_Exec(void)
     {
       Spirit1GetRxPacket(RxBuffer, &nLength);
 
-      /* Kontrola sily signalu
+      /* Kontrola sily signalu (pocet bliknuti by mohl byt: RSSI/30)
        *
        * vzdalenost 20cm: pozice paralelne RSSI=130
        *                         kolmo     RSSI=150
@@ -131,7 +130,7 @@ void App_Exec(void)
        * vzdalenost >30m: pozice paralelne RSSI= 55 (za rohem)
        *                         kolmo     RSSI=<50 (vypadava spojeni)
       */
-      uint8_t RSSIValue = SpiritQiGetRssi();
+//      uint8_t RSSIValue = SpiritQiGetRssi();
 
       g_eState = APP_STATE_START_RX;
       if (memcmp(RxBuffer, aCheckBroadcast, sizeof (aCheckBroadcast)) == 0)
@@ -198,7 +197,7 @@ void App_Exec(void)
     Gpio_Off();
   }
 
-  // vyhodnoceni zablesku
+  // vyhodnoceni zablesku (MASTER)
   if (g_bFlashFlag)
   {
     if (App_CheckFlash())
@@ -647,7 +646,7 @@ void OnSpiritInterruptHandlerSlaveSniffer(void)
   {
     SpiritIrq(VALID_PREAMBLE, S_DISABLE);
     SpiritIrq(VALID_SYNC, S_ENABLE);
-    uint8_t pqi = SpiritQiGetPqi();
+//    uint8_t pqi = SpiritQiGetPqi();
 
     /* disable LDC mode to avoid LDC timer falling during block Reception*/
     SpiritTimerLdcrMode(S_DISABLE);

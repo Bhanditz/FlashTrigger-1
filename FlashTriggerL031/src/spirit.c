@@ -153,8 +153,6 @@ void Spirit_WriteCommand(uint8_t nCommand, SpiritState state)
 
 void Spirit_InitRegs(bool bMaster)
 {
-//  SpiritRadioInit(&xRadioInit);
-
   Spirit_WriteReg(SYNTH_CONFIG0_BASE, 160);      // 0x9F  split time=3.47 ns
   Spirit_WriteCommand(COMMAND_STANDBY, MC_STATE_STANDBY);
 
@@ -195,6 +193,7 @@ void Spirit_InitRegs(bool bMaster)
 
   Spirit_SetFrequency();
 
+//  SpiritRadioInit(&xRadioInit);
 //  Spirit_Calibrate(bMaster);
 }
 

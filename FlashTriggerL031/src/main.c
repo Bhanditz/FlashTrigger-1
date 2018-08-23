@@ -7,12 +7,7 @@
 
 #include "stm32l0xx.h"
 #include "clock.h"
-#include "spirit_spi.h"
-#include "timer.h"
 #include "trigger_app.h"
-#include "Gpio_utility.h"
-
-#include "Eeprom.h"
 
 
 /* --------------------------------------------------------------------------------
@@ -42,8 +37,8 @@
  * v0.2 - opravena kalibrace (v DEBUG konfiguraci stiha expozicni cas 1/60s)
  * v0.3 - problemy pri zmene teploty -> odstranena manualni kalibrace
  * v0.4(ve vyvoji) - zmena modulace na GFSK_BT1
+ *                 - uprava parametru radia (datarate apod.)
  * Todo: blikani slave podle sily signalu
- * Todo: snizit datarate na 19200
  *
  */
 

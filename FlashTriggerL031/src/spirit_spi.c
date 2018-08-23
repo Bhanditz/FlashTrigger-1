@@ -69,8 +69,8 @@ void SPIspirit_init()
   /* (1) Master selection, BR: Fpclk/256 (due to C13 on the board, SPI_CLK is set to the minimum)
         CPOL and CPHA at zero (rising first edge), 8-bit data frame */
   /* (2) Slave select output enabled, RXNE IT */
-  SPI1->CR1 = SPI_CR1_MSTR; // | SPI_CR1_BR_0; /* (1) */  // (16MHz) :2
-  SPI1->CR2 = SPI_CR2_SSOE; // | SPI_CR2_RXNEIE; /* (2) */
+  SPI1->CR1 = SPI_CR1_MSTR; // | SPI_CR1_BR_0; // speed = (16MHz):2=8Mhz
+  SPI1->CR2 = SPI_CR2_SSOE; // | SPI_CR2_RXNEIE;
   SPI1->CR1 |= SPI_CR1_SPE; // Enable SPI
 
   /* Configure IT */

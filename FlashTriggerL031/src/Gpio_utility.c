@@ -99,31 +99,23 @@ void Gpio_OptoInit(Ptr_OnAdcConv pOnAdcConv)
   ADC1->IER = ADC_IER_EOCIE; // interrupt enable 'end of conversion'  (ADC_IER_EOSEQIE | ADC_IER_OVRIE)
 
   // Calibrate ADC
-  /* (1) Ensure that ADEN = 0 */
-  /* (2) Clear ADEN */
-  /* (3) Set ADCAL=1 */
-  /* (4) Wait until EOCAL=1 */
-  /* (5) Clear EOCAL */
-  if ((ADC1->CR & ADC_CR_ADEN) != 0) /* (1) */
+  if ((ADC1->CR & ADC_CR_ADEN) != 0) // Ensure that ADEN = 0
   {
-    ADC1->CR &= (uint32_t)(~ADC_CR_ADEN);  /* (2) */
+    ADC1->CR &= (uint32_t)(~ADC_CR_ADEN);  // Clear ADEN
   }
 
-  ADC1->CR |= ADC_CR_ADCAL; /* (3) */
-  while ((ADC1->ISR & ADC_ISR_EOCAL) == 0) /* (4) */
+  ADC1->CR |= ADC_CR_ADCAL; // Set ADCAL=1
+  while ((ADC1->ISR & ADC_ISR_EOCAL) == 0) // Wait until EOCAL=1
   {
     /* For robust implementation, add here time-out management */
   }
 
-  ADC1->ISR |= ADC_ISR_EOCAL; /* (5) */
+  ADC1->ISR |= ADC_ISR_EOCAL; // Clear EOCAL
 
-  // Enable ADC
-  /* (1) Enable the ADC */
-  /* (2) Wait until ADC ready if AUTOFF is not set */
-  ADC1->CR |= ADC_CR_ADEN; /* (1) */
+  ADC1->CR |= ADC_CR_ADEN;         // Enable the ADC
   if ((ADC1->CFGR1 &  ADC_CFGR1_AUTOFF) == 0)
   {
-    while ((ADC1->ISR & ADC_ISR_ADRDY) == 0) /* (2) */
+    while ((ADC1->ISR & ADC_ISR_ADRDY) == 0) // Wait until ADC ready if AUTOFF is not set
     {
       /* For robust implementation, add here time-out management */
     }
@@ -149,21 +141,18 @@ void Gpio_OptoInit(Ptr_OnAdcConv pOnAdcConv)
 
 void Gpio_DisableADC()
 {
-  /* (1) Ensure that no conversion on going */
-  /* (2) Stop any ongoing conversion */
-  /* (3) Wait until ADSTP is reset by hardware i.e. conversion is stopped */
-  /* (4) Disable the ADC */
-  /* (5) Wait until the ADC is fully disabled */
-  if ((ADC1->CR & ADC_CR_ADSTART) != 0) /* (1) */
+  if ((ADC1->CR & ADC_CR_ADSTART) != 0) // Ensure that no conversion on going
   {
-    ADC1->CR |= ADC_CR_ADSTP; /* (2) */
+    ADC1->CR |= ADC_CR_ADSTP; // Stop any ongoing conversion
   }
-  while ((ADC1->CR & ADC_CR_ADSTP) != 0) /* (3) */
+
+  while ((ADC1->CR & ADC_CR_ADSTP) != 0) // Wait until ADSTP is reset by hardware i.e. conversion is stopped
   {
      /* For robust implementation, add here time-out management */
   }
-  ADC1->CR |= ADC_CR_ADDIS; /* (4) */
-  while ((ADC1->CR & ADC_CR_ADEN) != 0) /* (5) */
+
+  ADC1->CR |= ADC_CR_ADDIS; // Disable the ADC
+  while ((ADC1->CR & ADC_CR_ADEN) != 0) // Wait until the ADC is fully disabled
   {
     /* For robust implementation, add here time-out management */
   }
@@ -330,7 +319,6 @@ void Gpio_SysTickCallback()
 
     old_state = state;
   }
-
 }
 
 void Gpio_SetOffInterval(uint32_t nInterval_ms)
