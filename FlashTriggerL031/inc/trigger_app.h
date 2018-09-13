@@ -2,7 +2,7 @@
  * spirit1_app.h
  *
  *  Created on: 21. 6. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #ifndef SPIRIT1_APP_H_
@@ -26,7 +26,8 @@ typedef enum
   APP_STATE_DATA_RECEIVED,
   APP_STATE_SEND_CHECK,
   APP_STATE_SEND_FLASH,
-  APP_STATE_WAIT_FOR_TX_DONE,
+  APP_STATE_WAIT_FOR_TX_DONE_CHECK,
+  APP_STATE_WAIT_FOR_TX_DONE_FLASH,
 } AppState_t;
 
 typedef enum
@@ -53,7 +54,6 @@ void App_ReceiveBuffer(uint8_t *RxFrameBuff, uint8_t cRxlen);
 void OnSpiritInterruptHandlerSlaveSniffer(void);
 void OnSpiritInterruptHandlerSlave(void);
 void OnSpiritInterruptHandlerMaster(void);
-void App_FlashActive();
 bool App_CheckFlash(void);
 void Programming();
 void App_WaitAfterFlash(void);

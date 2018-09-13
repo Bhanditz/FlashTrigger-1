@@ -2,7 +2,7 @@
  * spirit1_app.c
  *
  *  Created on: 21. 6. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "trigger_app.h"
@@ -26,6 +26,7 @@ SGpioInit xGpioIRQ =
 };
 
 #define CHECK_INTERVAL_MS         2500
+#define FLASH_TRANSMIT_COUNT         3
 
 #define FLASH_LIMIT_STD           2
 #define FLASH_LIMIT_PRG           8
@@ -36,8 +37,8 @@ SGpioInit xGpioIRQ =
 #define EEPROM_FLASH_INTERVAL     0                                             // interval mezi zablesky
 #define EEPROM_FLASHES            (EEPROM_FLASH_INTERVAL + sizeof(uint32_t))    // pocet zablesku
 
-uint8_t aCheckBroadcast[] = {'C','H','E','C','K'};
-uint8_t aFlashBroadcast[] = {'F','L','A','S','H'};
+uint8_t aCheckBroadcast[] = {'C','H','E','C','K'};  // check
+uint8_t aFlashBroadcast[] = {'F','L','A','S','H'};  // flash
 uint8_t RxBuffer[MAX_BUFFER_LEN];
 
 SpiritIrqs xIrqStatus;
@@ -57,7 +58,7 @@ AppState_t g_eState = APP_STATE_IDLE;
 
 uint8_t g_bMaster = 0;
 
-uint16_t g_nOptoValue;
+volatile uint16_t g_nOptoValue;
 
 volatile bool g_bFlashFlag;          // detekovan zablesk
 volatile bool g_bFlashEnable = false;  // povoleni detekce zablesku
@@ -68,9 +69,10 @@ volatile bool g_bDelayOver;
 volatile uint16_t g_nTimeCounter;       // citac poctu preruseni ADC (50 us)
 volatile bool g_bTimeCounterStop;       // citat start/stop, po preteceni se sam vypne
 
-uint16_t g_nFlashLimit;               // citlivost detekce zablesku
+volatile uint16_t g_nFlashLimit;               // citlivost detekce zablesku
 uint16_t g_nFlashInterval;            // naprogramovana vzdalenost mezi zablesky
 uint16_t g_nFlashes = 1;              // pocet naprogramovanych zablesku
+uint8_t  g_nTransmitCounter;          // citani poctu vysilani pro FLASH
 
 AppMode_t g_eMode;                // mode MASTERa
 
@@ -139,6 +141,7 @@ void App_Exec(void)
       }
       else if (memcmp(RxBuffer, aFlashBroadcast, sizeof (aFlashBroadcast)) == 0)
       {
+        // tahle sekvence se muze opakovat pro vsechny (3x) vysilaci pokusy mastera, ale blesk je stejne vybity
         Gpio_FlashBlink();
         Gpio_LedBlink(50);
         Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
@@ -148,24 +151,40 @@ void App_Exec(void)
 
   case APP_STATE_SEND_CHECK:
     {
-      Gpio_LedBlink(100);
       App_SendBuffer(aCheckBroadcast, sizeof (aCheckBroadcast));
-      g_eState = APP_STATE_WAIT_FOR_TX_DONE;
+      Gpio_LedBlink(100);
+      g_eState = APP_STATE_WAIT_FOR_TX_DONE_CHECK;
     }
     break;
 
   case APP_STATE_SEND_FLASH:
       App_SendBuffer(aFlashBroadcast, sizeof (aFlashBroadcast));
-      g_eState = APP_STATE_WAIT_FOR_TX_DONE;
-      Gpio_LedBlink(100);
-      App_WaitAfterFlash();
+      g_eState = APP_STATE_WAIT_FOR_TX_DONE_FLASH;
     break;
 
-  case APP_STATE_WAIT_FOR_TX_DONE:
+  case APP_STATE_WAIT_FOR_TX_DONE_FLASH:
     if(g_TxDoneFlag)
     {
       g_TxDoneFlag = RESET;
 //      Spirit_Calibrate(g_bMaster);
+      if (g_nTransmitCounter)
+      {
+        g_nTransmitCounter--;
+        g_eState = APP_STATE_SEND_FLASH;
+      }
+      else
+      {
+        Gpio_LedBlink(100);
+        App_WaitAfterFlash();
+        g_eState = APP_STATE_IDLE;
+      }
+    }
+    break;
+
+  case APP_STATE_WAIT_FOR_TX_DONE_CHECK:
+    if(g_TxDoneFlag)
+    {
+      g_TxDoneFlag = RESET;
       g_eState = APP_STATE_IDLE;
     }
     break;
@@ -202,8 +221,9 @@ void App_Exec(void)
   {
     if (App_CheckFlash())
     {
-      // naprogramovana sekvence souhlasi
+      // naprogramovana sekvence souhlasi, posleme zablesk
       g_eState = APP_STATE_SEND_FLASH;
+      g_nTransmitCounter = FLASH_TRANSMIT_COUNT;
       Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
     }
     else
@@ -307,6 +327,8 @@ void App_Init()
   }
 
   // Todo: musi to tu byt pro master???
+  // EnableSQI nastavuje reset hodnotu, tak by to tu nemuselo byt nai pro SLAVE
+  // RSSI threshold je nastaven mnohem niže nez reset hodnota
   Spirit_EnableSQI();
   Spirit_SetRssiThreshold();
 
@@ -503,15 +525,6 @@ void App_SendBuffer(uint8_t* pBuffer, uint8_t nLength)
 */
 void App_ReceiveBuffer(uint8_t *RxFrameBuff, uint8_t cRxlen)
 {
-  /*float rRSSIValue = 0;*/
-//  exitTime = SET;
-
-//  PktBasicAddressesInit PktBasicAddresses;
-//  SpiritPktBasicGetAddressesInfo(&PktBasicAddresses);
-
-  /* Spirit IRQs disable */
-//  Spirit1DisableIrq();
-
   /* Spirit IRQs enable */
   Spirit1EnableRxIrq();
 
@@ -532,11 +545,11 @@ void App_ReceiveBuffer(uint8_t *RxFrameBuff, uint8_t cRxlen)
 }
 
 
-void App_FlashActive()
-{
-  g_eState = APP_STATE_SEND_FLASH;
-  Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
-}
+//void App_FlashActive()
+//{
+//  g_eState = APP_STATE_SEND_FLASH;
+//  Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
+//}
 
 void App_ADCGetConv(uint16_t ADCValue)
 {

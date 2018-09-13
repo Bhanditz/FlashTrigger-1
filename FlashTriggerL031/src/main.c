@@ -2,13 +2,21 @@
  * main.c
  *
  *  Created on: 10. 8. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "stm32l0xx.h"
 #include "clock.h"
 #include "trigger_app.h"
 
+/* ------------------------------------------------------------------------------
+ * HW usage:
+ *
+ * ADC - mereni optodiody na MASTER konfiguraci
+ * TIM22 - spousteni ADC prevodu v intervalu 50 us
+ * TIM21 - mereni microsec intervalu pro komunikaci SPIRIT1
+ *
+ */
 
 /* --------------------------------------------------------------------------------
  *
@@ -38,6 +46,9 @@
  * v0.3 - problemy pri zmene teploty -> odstranena manualni kalibrace
  * v0.4(ve vyvoji) - zmena modulace na GFSK_BT1
  *                 - uprava parametru radia (datarate apod.)
+ *                 - 3x opakovane vyslani FLASH prikazu
+ *                 - wait interval pro komunikaci se SPIRIT1 meren casovacem
+ *
  * Todo: blikani slave podle sily signalu
  *
  */

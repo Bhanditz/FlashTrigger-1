@@ -2,7 +2,7 @@
  * spirit_gpio.c
  *
  *  Created on: 24. 8. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "spirit.h"

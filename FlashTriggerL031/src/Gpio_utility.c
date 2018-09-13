@@ -2,7 +2,7 @@
  * Gpio_utility.c
  *
  *  Created on: 24. 8. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "Gpio_utility.h"
@@ -84,8 +84,8 @@ void Gpio_OptoInit(Ptr_OnAdcConv pOnAdcConv)
   // Configure OPTO INPUT pins as analog input
   GPIOA->MODER = (GPIOA->MODER & ~(GPIO_MODER_MODE1)) | GPIO_MODER_MODE1;
 
-  // Configure ADC
-  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;  // clock for ADC
+  // Set clock for ADC
+  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
 
   /* (1) Select HSI16 by writing 00 in CKMODE (reset value) */
   /* (2) Select the external trigger on falling edge and external trigger on TIM22_TRGO
@@ -169,7 +169,7 @@ void Gpio_TimoutTimerConfig_ms(uint32_t nTime_ms, Ptr_OnTimer pOnTimer)
   TIM2->PSC = 1000;             // 16Mhz/1000 = 16kHz
   TIM2->ARR = (uint16_t)(16 * nTime_ms); // 16kHz / 1000 = 16ticks/ms
 
-  NVIC_SetPriority(TIM2_IRQn, 2);
+  NVIC_SetPriority(TIM2_IRQn, 3);
   NVIC_EnableIRQ(TIM2_IRQn);
 
   TIM2->DIER |= TIM_DIER_UIE;   // update interrupt enable
@@ -335,6 +335,7 @@ void ADC1_COMP_IRQHandler(void)
 {
   if (ADC1->ISR & ADC_ISR_EOC)
   {
+    ADC1->ISR |= ADC_ISR_EOC;
     if (g_pOnAdcConv)
     {
       g_pOnAdcConv(ADC1->DR);

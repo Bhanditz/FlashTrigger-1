@@ -7,6 +7,9 @@
 
 #include "timer.h"
 
+#define TIMER_US      TIM21         // prirazeni casovace pro mereni us intervalu
+#define TIMER_US_CLK  RCC_APB2ENR_TIM21EN
+
 typedef void(*Ptr_OnTxDataPacketResponse)(void);
 
 static volatile uint32_t nDelayTimer;
@@ -60,20 +63,20 @@ void SysTick_Handler(void)
 void TimerUs_init(void)
 {
     // Enable clock for TIM22
-    RCC->APB2ENR |= RCC_APB2ENR_TIM22EN;
+    RCC->APB2ENR |= TIMER_US_CLK;
 }
 
 void TimerUs_start(void)
 {
-    TIM22->PSC = SystemCoreClock / 1000000; // 7 instructions
-    TIM22->CNT = 0;
-    TIM22->EGR = TIM_EGR_UG;
-    TIM22->CR1 |= TIM_CR1_CEN;
+  TIMER_US->PSC = SystemCoreClock / 1000000; // 7 instructions
+  TIMER_US->CNT = 0;
+  TIMER_US->EGR = TIM_EGR_UG;
+  TIMER_US->CR1 |= TIM_CR1_CEN;
 }
 
 uint16_t TimerUs_get_microseconds(void)
 {
-    return TIM22->CNT;
+    return TIMER_US->CNT;
 }
 
 void TimerUs_delay(uint16_t microseconds)
@@ -87,10 +90,10 @@ void TimerUs_delay(uint16_t microseconds)
 
 void TimerUs_clear(void)
 {
-    TIM22->CNT = 0;
+  TIMER_US->CNT = 0;
 }
 
 void TimerUs_stop(void)
 {
-    TIM22->CR1 &= ~TIM_CR1_CEN;
+  TIMER_US->CR1 &= ~TIM_CR1_CEN;
 }
