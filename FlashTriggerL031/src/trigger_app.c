@@ -31,8 +31,11 @@ SGpioInit xGpioIRQ =
 #define FLASH_LIMIT_STD           2
 #define FLASH_LIMIT_PRG           8
 
-#define STD_OFF_INTERVAL_MS       (1000*60*20)  // 20 minut
-#define PRG_OFF_INTERVAL_MS       (1000*60*1)   // 1 minuta
+#define STD_OFF_INTERVAL_MS        (1000 * 60 * 5)   // off interval po zapnuti (bez signalu) - 5 minut
+#define STD_OFF_INTERVAL_RCV_MS    (1000 * 60 * 15)  // off interval po prijeti signalu - 15 minut
+
+
+#define PRG_OFF_INTERVAL_MS        (1000 * 60 * 1)    // 1 minuta
 
 #define EEPROM_FLASH_INTERVAL     0                                             // interval mezi zablesky
 #define EEPROM_FLASHES            (EEPROM_FLASH_INTERVAL + sizeof(uint32_t))    // pocet zablesku
@@ -135,6 +138,7 @@ void App_Exec(void)
 //      uint8_t RSSIValue = SpiritQiGetRssi();
 
       g_eState = APP_STATE_START_RX;
+      Gpio_SetOffInterval(STD_OFF_INTERVAL_RCV_MS);
       if (memcmp(RxBuffer, aCheckBroadcast, sizeof (aCheckBroadcast)) == 0)
       {
         Gpio_LedBlink(50);
@@ -144,7 +148,6 @@ void App_Exec(void)
         // tahle sekvence se muze opakovat pro vsechny (3x) vysilaci pokusy mastera, ale blesk je stejne vybity
         Gpio_FlashBlink();
         Gpio_LedBlink(50);
-        Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
       }
     }
     break;
@@ -224,7 +227,7 @@ void App_Exec(void)
       // naprogramovana sekvence souhlasi, posleme zablesk
       g_eState = APP_STATE_SEND_FLASH;
       g_nTransmitCounter = FLASH_TRANSMIT_COUNT;
-      Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
+      Gpio_SetOffInterval(STD_OFF_INTERVAL_RCV_MS);
     }
     else
     {
@@ -236,10 +239,7 @@ void App_Exec(void)
 void App_Init()
 {
   Timer_Init();
-
   Gpio_Init();
-
-  Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
 
   // zjistime, jestli jsme MASTER nebo SLAVE
   g_bMaster = Gpio_IsMaster();
@@ -248,11 +248,13 @@ void App_Init()
   if (g_bMaster)
   {
     Spirit_Init(OnSpiritInterruptHandlerMaster);
+    Gpio_SetOffInterval(STD_OFF_INTERVAL_RCV_MS);
   }
   else
   {
     // Spirit_Init(OnSpiritInterruptHandlerSlaveSniffer);
     Spirit_Init(OnSpiritInterruptHandlerSlave);
+    Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
   }
 
   // cekat na uvolneni tlacitka a pro MASTER zmerime delku stisknuti
@@ -692,7 +694,7 @@ void OnSpiritInterruptHandlerSlaveSniffer(void)
     else if (memcmp(RxBuffer, aFlashBroadcast, sizeof (aFlashBroadcast)) == 0)
     {
       Gpio_FlashBlink();
-      Gpio_SetOffInterval(STD_OFF_INTERVAL_MS);
+      Gpio_SetOffInterval(STD_OFF_INTERVAL_RCV_MS);
     }
 
     App_PrepareSniffing();

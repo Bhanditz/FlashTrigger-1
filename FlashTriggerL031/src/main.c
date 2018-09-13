@@ -12,10 +12,10 @@
 /* ------------------------------------------------------------------------------
  * HW usage:
  *
- * ADC - mereni optodiody na MASTER konfiguraci
+ * ADC   - mereni optodiody na MASTER konfiguraci
  * TIM22 - spousteni ADC prevodu v intervalu 50 us
  * TIM21 - mereni microsec intervalu pro komunikaci SPIRIT1
- *
+ * TIM2  - timer pro sniff mod (nepouzito)
  */
 
 /* --------------------------------------------------------------------------------
@@ -48,6 +48,7 @@
  *                 - uprava parametru radia (datarate apod.)
  *                 - 3x opakovane vyslani FLASH prikazu
  *                 - wait interval pro komunikaci se SPIRIT1 meren casovacem
+ *                 - zkracen timeout vypnuti bez prijmu signalu pro SLAVE
  *
  * Todo: blikani slave podle sily signalu
  *
