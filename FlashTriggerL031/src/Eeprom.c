@@ -2,7 +2,7 @@
  * Eeprom.c
  *
  *  Created on: 26. 8. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "Eeprom.h"

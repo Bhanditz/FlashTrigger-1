@@ -2,7 +2,7 @@
  * clock.c
  *
  *  Created on: 10. 8. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "clock.h"

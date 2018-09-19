@@ -2,7 +2,7 @@
  * spirit_spi.c
  *
  *  Created on: 24. 8. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "spirit_spi.h"

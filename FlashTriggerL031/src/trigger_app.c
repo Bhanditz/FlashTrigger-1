@@ -25,20 +25,19 @@ SGpioInit xGpioIRQ =
   SPIRIT_GPIO_DIG_OUT_IRQ
 };
 
-#define CHECK_INTERVAL_MS         2500
+#define CHECK_INTERVAL_MS            2500
 #define FLASH_TRANSMIT_COUNT         3
 
-#define FLASH_LIMIT_STD           2
-#define FLASH_LIMIT_PRG           8
+#define FLASH_LIMIT_STD              2
+#define FLASH_LIMIT_PRG              8
 
-#define STD_OFF_INTERVAL_MS        (1000 * 60 * 5)   // off interval po zapnuti (bez signalu) - 5 minut
-#define STD_OFF_INTERVAL_RCV_MS    (1000 * 60 * 15)  // off interval po prijeti signalu - 15 minut
+#define STD_OFF_INTERVAL_MS          (1000 * 60 * 3)   // off interval po zapnuti (bez signalu) - 5 minut
+#define STD_OFF_INTERVAL_RCV_MS      (1000 * 60 * 15)  // off interval po prijeti signalu - 15 minut
 
+#define PRG_OFF_INTERVAL_MS          (1000 * 60 * 1)    // 1 minuta
 
-#define PRG_OFF_INTERVAL_MS        (1000 * 60 * 1)    // 1 minuta
-
-#define EEPROM_FLASH_INTERVAL     0                                             // interval mezi zablesky
-#define EEPROM_FLASHES            (EEPROM_FLASH_INTERVAL + sizeof(uint32_t))    // pocet zablesku
+#define EEPROM_FLASH_INTERVAL        0                                             // interval mezi zablesky
+#define EEPROM_FLASHES               (EEPROM_FLASH_INTERVAL + sizeof(uint32_t))    // pocet zablesku
 
 uint8_t aCheckBroadcast[] = {'C','H','E','C','K'};  // check
 uint8_t aFlashBroadcast[] = {'F','L','A','S','H'};  // flash

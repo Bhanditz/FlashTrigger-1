@@ -2,7 +2,7 @@
  * timer.c
  *
  *  Created on: 24. 6. 2016
- *      Author: priesolv
+ *      Author: Priesol Vladimir
  */
 
 #include "timer.h"

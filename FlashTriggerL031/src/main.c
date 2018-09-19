@@ -44,11 +44,12 @@
  * v0.1 - prvni verze (1.3.2018)
  * v0.2 - opravena kalibrace (v DEBUG konfiguraci stiha expozicni cas 1/60s)
  * v0.3 - problemy pri zmene teploty -> odstranena manualni kalibrace
- * v0.4(ve vyvoji) - zmena modulace na GFSK_BT1
- *                 - uprava parametru radia (datarate apod.)
- *                 - 3x opakovane vyslani FLASH prikazu
- *                 - wait interval pro komunikaci se SPIRIT1 meren casovacem
- *                 - zkracen timeout vypnuti bez prijmu signalu pro SLAVE
+ * v0.4 - zmena modulace na GFSK_BT1
+ *      - uprava parametru radia (datarate apod.)
+ *      - 3x opakovane vyslani FLASH prikazu
+ *      - odmerovani wait intervalu pro komunikaci se SPIRIT1 casovacem
+ *      - zkracen timeout vypnuti bez prijmu signalu pro SLAVE na 3 minuty
+ *      - latence -> zvlada cas uzaverky 1/125 (<8ms)
  *
  * Todo: blikani slave podle sily signalu
  *
@@ -67,15 +68,6 @@ int main(void)
   App_Init();
 
 //  Programming();
-
-
-//  // po resetu jdeme do Standby
-//  RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-//  if (!(PWR->CSR & PWR_CSR_SBF))
-//  {
-//    Gpio_StandbyMode();
-//  }
-
 
   while (1)
   {
