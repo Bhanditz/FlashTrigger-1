@@ -47,7 +47,7 @@
  * v0.4 - zmena modulace na GFSK_BT1
  *      - uprava parametru radia (datarate apod.)
  *      - 3x opakovane vyslani FLASH prikazu
- *      - odmerovani wait intervalu pro komunikaci se SPIRIT1 casovacem
+ *      - odmerovani casovacem wait intervalu pro komunikaci se SPIRIT1
  *      - zkracen timeout vypnuti bez prijmu signalu pro SLAVE na 3 minuty
  *      - latence -> zvlada cas uzaverky 1/125 (<8ms)
  *

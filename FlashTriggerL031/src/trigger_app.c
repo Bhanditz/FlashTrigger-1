@@ -39,8 +39,8 @@ SGpioInit xGpioIRQ =
 #define EEPROM_FLASH_INTERVAL        0                                             // interval mezi zablesky
 #define EEPROM_FLASHES               (EEPROM_FLASH_INTERVAL + sizeof(uint32_t))    // pocet zablesku
 
-uint8_t aCheckBroadcast[] = {'C','H','E','C','K'};  // check
-uint8_t aFlashBroadcast[] = {'F','L','A','S','H'};  // flash
+uint8_t aCheckBroadcast[] = { 'C','H','K' };  // check
+uint8_t aFlashBroadcast[] = { 'F','L','S' };  // flash
 uint8_t RxBuffer[MAX_BUFFER_LEN];
 
 SpiritIrqs xIrqStatus;
